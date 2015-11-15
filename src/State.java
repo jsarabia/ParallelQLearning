@@ -1,5 +1,6 @@
 import java.util.HashMap;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by Joe on 11/14/15.
@@ -10,6 +11,7 @@ public class State {
     private double reward = 0.0;
     private int visited = 0;
     private HashMap<String,double[]> actions;
+    public AtomicBoolean lock;
 
 
     public double getReward() {
@@ -25,6 +27,7 @@ public class State {
         position[0] = x;
         position[1] = y;
         actions = new HashMap<>();
+        lock = new AtomicBoolean();
     }
 
     public void addAction(String direction, double value){

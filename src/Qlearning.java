@@ -1,6 +1,7 @@
 import java.util.Random;
 import java.util.Set;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by Joe on 11/14/15.
@@ -33,23 +34,54 @@ public class Qlearning {
         alpha = 1;
         gamma = .8;
         Random rand = new Random();
-        for(int i =0; i < 1000; i++){
-            int y = rand.nextInt(q_table.size());
-            int x = rand.nextInt(q_table.elementAt(y).size());
-            while(world[y][x] == 'x' || q_table.elementAt(y).elementAt(x).getReward() > 99.999){
-                y = rand.nextInt(q_table.size());
-                x = rand.nextInt(q_table.elementAt(y).size());
-            }
-            episode(world, q_table, q_table.elementAt(y).elementAt(x), 0, gamma, alpha);
+        int numEpisodes = 100000;
+        Thread[] threads = new Thread[numEpisodes];
+        for(int i =0; i < numEpisodes; i++){
+            threads[i] = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    int y = rand.nextInt(q_table.size());
+                    int x = rand.nextInt(q_table.elementAt(y).size());
+                    while(world[y][x] == 'x' || q_table.elementAt(y).elementAt(x).getReward() > 99.999){
+                        y = rand.nextInt(q_table.size());
+                        x = rand.nextInt(q_table.elementAt(y).size());
+                    }
+                    episode(world, q_table, q_table.elementAt(y).elementAt(x), 0, gamma, alpha);
+                }
+            });
         }
+        long startTime = System.currentTimeMillis();
+        for(Thread t : threads){
+            t.start();
+        }
+        for(Thread t : threads){
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        long endTime = System.currentTimeMillis();
         printQTable(q_table);
         traverseGrid(start, goal, q_table, world);
+        System.out.println("Time for execution is: " + (endTime-startTime));
     }
 
     private void episode(char[][] world, Vector<Vector<State>> qt, State state, int depth, double gamma, double alpha){
+
         if(depth>150){
             return;
         }
+
+        //test and test and set the initial state
+        while(state.lock.get() == true || !state.lock.compareAndSet(false, true)){
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
         int[] pos = state.getPosition();
         int x = pos[0];
         int y = pos[1];
@@ -67,7 +99,9 @@ public class Qlearning {
         state.takeAction(direction);
         double reward = state.getActionReward(direction) + alpha*(next_state.getReward() + gamma*maxActionReward(next_state) - state.getActionReward(direction));
         state.setActionReward(direction, Math.max(reward, state.getActionReward(direction)));
-        episode(world, qt, next_state, depth+1, gamma, alpha);
+        state.lock.set(false);
+        next_state.lock.set(false);
+        episode(world, qt, next_state, depth + 1, gamma, alpha);
     }
 
     public double maxActionReward(State state){
@@ -85,28 +119,30 @@ public class Qlearning {
     public ReturnPair nextState(Vector<Vector<State>> qt, Set<String> neighbors, State current){
         String direction = null;
         Random rand = new Random();
-        int index = rand.nextInt(neighbors.size());
-        direction = (String)neighbors.toArray()[index];
-        int[] pos = current.getPosition();
-        int x = pos[0];
-        int y = pos[1];
-        State next;
-        if(direction.equals("left")){
-            next = qt.elementAt(y).elementAt(x-1);
-        }
-        else if(direction.equals("right")){
-            next = qt.elementAt(y).elementAt(x+1);
-        }
-        else if(direction.equals("up")){
-            next = qt.elementAt(y-1).elementAt(x);
-        }
-        else if(direction.equals("down")){
-            next = qt.elementAt(y+1).elementAt(x);
-        }
-        else {
-            next = null;
-            System.out.println(direction);
-        }
+        State next = null;
+        do{
+            int index = rand.nextInt(neighbors.size());
+            direction = (String)neighbors.toArray()[index];
+            int[] pos = current.getPosition();
+            int x = pos[0];
+            int y = pos[1];
+            if(direction.equals("left")){
+                next = qt.elementAt(y).elementAt(x-1);
+            }
+            else if(direction.equals("right")){
+                next = qt.elementAt(y).elementAt(x+1);
+            }
+            else if(direction.equals("up")){
+                next = qt.elementAt(y-1).elementAt(x);
+            }
+            else if(direction.equals("down")){
+                next = qt.elementAt(y+1).elementAt(x);
+            }
+            else {
+                next = null;
+                System.out.println(direction);
+            }
+        } while(next.lock.get() == true || !next.lock.compareAndSet(false, true));
 
         ReturnPair rp = new ReturnPair(direction, next);
         return rp;
