@@ -33,7 +33,9 @@ public class Qlearning {
         alpha = 1;
         gamma = .8;
         Random rand = new Random();
-        for(int i =0; i < 1000; i++){
+        int numEpisodes = 100000;
+        long startTime = System.currentTimeMillis();
+        for(int i =0; i < numEpisodes; i++){
             int y = rand.nextInt(q_table.size());
             int x = rand.nextInt(q_table.elementAt(y).size());
             while(world[y][x] == 'x' || q_table.elementAt(y).elementAt(x).getReward() > 99.999){
@@ -42,8 +44,10 @@ public class Qlearning {
             }
             episode(world, q_table, q_table.elementAt(y).elementAt(x), 0, gamma, alpha);
         }
+        long endTime = System.currentTimeMillis();
         printQTable(q_table);
         traverseGrid(start, goal, q_table, world);
+        System.out.println("Time to complete: " + (endTime-startTime));
     }
 
     private void episode(char[][] world, Vector<Vector<State>> qt, State state, int depth, double gamma, double alpha){
