@@ -27,7 +27,7 @@ public class State {
         position[0] = x;
         position[1] = y;
         actions = new HashMap<>();
-        lock = new AtomicBoolean();
+        lock = new AtomicBoolean(false);
     }
 
     public void addAction(String direction, double value){

@@ -35,30 +35,34 @@ public class Qlearning {
         gamma = .8;
         Random rand = new Random();
         int numEpisodes = 100000;
-        Thread[] threads = new Thread[numEpisodes];
-        for(int i =0; i < numEpisodes; i++){
+        int numThreads = 10;
+        Thread[] threads = new Thread[numThreads];
+        for(int i = 0; i < numThreads; i++) {
             threads[i] = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     int y = rand.nextInt(q_table.size());
                     int x = rand.nextInt(q_table.elementAt(y).size());
-                    while(world[y][x] == 'x' || q_table.elementAt(y).elementAt(x).getReward() > 99.999){
+                    while (world[y][x] == 'x' || q_table.elementAt(y).elementAt(x).getReward() > 99.999) {
                         y = rand.nextInt(q_table.size());
                         x = rand.nextInt(q_table.elementAt(y).size());
                     }
-                    episode(world, q_table, q_table.elementAt(y).elementAt(x), 0, gamma, alpha);
+                    State state = q_table.elementAt(y).elementAt(x);
+                    episode(world, q_table, state, 0, gamma, alpha);
                 }
             });
         }
         long startTime = System.currentTimeMillis();
-        for(Thread t : threads){
-            t.start();
-        }
-        for(Thread t : threads){
-            try {
-                t.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        for(int j =0; j < numEpisodes; j+=numThreads){
+            for(Thread t : threads){
+                t.run();
+            }
+            for(Thread t : threads){
+                try {
+                    t.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
         long endTime = System.currentTimeMillis();
