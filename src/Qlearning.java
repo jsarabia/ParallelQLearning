@@ -41,30 +41,31 @@ public class Qlearning {
             threads[i] = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    int y = rand.nextInt(q_table.size());
-                    int x = rand.nextInt(q_table.elementAt(y).size());
-                    while (world[y][x] == 'x' || q_table.elementAt(y).elementAt(x).getReward() > 99.999) {
-                        y = rand.nextInt(q_table.size());
-                        x = rand.nextInt(q_table.elementAt(y).size());
+                    for(int t = 0; t < numEpisodes/numThreads; t++){
+                        int y = rand.nextInt(q_table.size());
+                        int x = rand.nextInt(q_table.elementAt(y).size());
+                        while (world[y][x] == 'x' || q_table.elementAt(y).elementAt(x).getReward() > 99.999) {
+                            y = rand.nextInt(q_table.size());
+                            x = rand.nextInt(q_table.elementAt(y).size());
+                        }
+                        State state = q_table.elementAt(y).elementAt(x);
+                        episode(world, q_table, state, 0, gamma, alpha);
                     }
-                    State state = q_table.elementAt(y).elementAt(x);
-                    episode(world, q_table, state, 0, gamma, alpha);
                 }
             });
         }
         long startTime = System.currentTimeMillis();
-        for(int j =0; j < numEpisodes; j+=numThreads){
-            for(Thread t : threads){
-                t.run();
-            }
-            for(Thread t : threads){
-                try {
-                    t.join();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+        for(Thread t : threads){
+            t.run();
+        }
+        for(Thread t : threads){
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
+
         long endTime = System.currentTimeMillis();
         printQTable(q_table);
         traverseGrid(start, goal, q_table, world);
@@ -80,7 +81,7 @@ public class Qlearning {
         //test and test and set the initial state
         while(state.lock.get() == true || !state.lock.compareAndSet(false, true)){
             try {
-                Thread.sleep(10);
+                Thread.sleep(20);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
