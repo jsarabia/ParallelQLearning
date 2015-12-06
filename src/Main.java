@@ -14,10 +14,10 @@ public class Main {
         ts.add(10);
         int numToAverage = 100;
         int episodeCount = 1000000;
-        System.out.println("Backoff Algorithm");
+        System.out.println("TTAS");
         for(Integer t : ts) {
             int sum = 0;
-            for (int i = 0; i < episodeCount; i++) {
+            for (int i = 0; i < numToAverage; i++) {
                 Grid grid = new Grid();
                 grid.readFile("data/complexWorld.txt");
                 //grid.printWorld();

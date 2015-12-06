@@ -83,10 +83,6 @@ public class Qlearning {
             return;
         }
 
-        //test and test and set the initial state
-        while(state.lock.get() == true || !state.lock.compareAndSet(false, true)){
-        }
-
         int[] pos = state.getPosition();
         int x = pos[0];
         int y = pos[1];
@@ -101,6 +97,18 @@ public class Qlearning {
         ReturnPair pair = nextState(qt, neighbors, state);
         String direction = pair.getDirection();
         State next_state = pair.getState();
+
+        while(next_state.lock.get() == true){
+            if(next_state.lock.compareAndSet(false, true)) {
+                if(state.lock.get() && true && state.lock.compareAndSet(false, true)){
+                    break;
+                }
+                else {
+                    next_state.lock.set(false);
+                }
+            }
+        }
+
         state.takeAction(direction);
         double reward = state.getActionReward(direction) + alpha*(next_state.getReward() + gamma*maxActionReward(next_state) - state.getActionReward(direction));
         state.setActionReward(direction, Math.max(reward, state.getActionReward(direction)));
@@ -125,29 +133,28 @@ public class Qlearning {
         String direction = null;
         Random rand = new Random();
         State next = null;
-        do{
-            int index = rand.nextInt(neighbors.size());
-            direction = (String)neighbors.toArray()[index];
-            int[] pos = current.getPosition();
-            int x = pos[0];
-            int y = pos[1];
-            if(direction.equals("left")){
-                next = qt.elementAt(y).elementAt(x-1);
-            }
-            else if(direction.equals("right")){
-                next = qt.elementAt(y).elementAt(x+1);
-            }
-            else if(direction.equals("up")){
-                next = qt.elementAt(y-1).elementAt(x);
-            }
-            else if(direction.equals("down")){
-                next = qt.elementAt(y+1).elementAt(x);
-            }
-            else {
-                next = null;
-                System.out.println(direction);
-            }
-        } while(next.lock.get() == true || !next.lock.compareAndSet(false, true));
+
+        int index = rand.nextInt(neighbors.size());
+        direction = (String)neighbors.toArray()[index];
+        int[] pos = current.getPosition();
+        int x = pos[0];
+        int y = pos[1];
+        if(direction.equals("left")){
+            next = qt.elementAt(y).elementAt(x-1);
+        }
+        else if(direction.equals("right")){
+            next = qt.elementAt(y).elementAt(x+1);
+        }
+        else if(direction.equals("up")){
+            next = qt.elementAt(y-1).elementAt(x);
+        }
+        else if(direction.equals("down")){
+            next = qt.elementAt(y+1).elementAt(x);
+        }
+        else {
+            next = null;
+            System.out.println(direction);
+        }
 
         ReturnPair rp = new ReturnPair(direction, next);
         return rp;
