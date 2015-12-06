@@ -17,7 +17,7 @@ public class Main {
         System.out.println("Backoff Algorithm");
         for(Integer t : ts) {
             int sum = 0;
-            for (int i = 0; i < episodeCount; i++) {
+            for (int i = 0; i < numToAverage; i++) {
                 Grid grid = new Grid();
                 grid.readFile("data/complexWorld.txt");
                 //grid.printWorld();
