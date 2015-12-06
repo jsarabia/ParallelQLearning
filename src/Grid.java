@@ -38,7 +38,7 @@ public class Grid {
                     world[y][x] = tempWorld.elementAt(y).elementAt(x);
                 }
             }
-            System.out.println("size is " + height + "x" + width);
+            //System.out.println("size is " + height + "x" + width);
         } catch (Exception e){
             e.printStackTrace();
         }

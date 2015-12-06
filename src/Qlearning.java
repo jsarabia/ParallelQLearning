@@ -22,20 +22,24 @@ public class Qlearning {
         }
     }
 
+    public double execTime(){
+        return execTime;
+    }
+
+
     Vector<Vector<State>> q_table;
     private double alpha;
     private double gamma;
+    private double execTime;
 
-    public Qlearning(int[] start, int[] goal, char[][] world){
+    public Qlearning(int[] start, int[] goal, char[][] world, int numThreads, int numEpisodes){
         q_table = new Vector<>();
         qInit(q_table, world, goal);
-        printQTable(q_table);
-        printRewards(q_table);
+        //printQTable(q_table);
+        //printRewards(q_table);
         alpha = 1;
         gamma = .8;
         Random rand = new Random();
-        int numEpisodes = 100000;
-        int numThreads = 10;
         Thread[] threads = new Thread[numThreads];
         for(int i = 0; i < numThreads; i++) {
             threads[i] = new Thread(new Runnable() {
@@ -67,9 +71,10 @@ public class Qlearning {
         }
 
         long endTime = System.currentTimeMillis();
-        printQTable(q_table);
-        traverseGrid(start, goal, q_table, world);
-        System.out.println("Time for execution is: " + (endTime-startTime));
+        //printQTable(q_table);
+        //traverseGrid(start, goal, q_table, world);
+        //System.out.println("Time for execution is: " + (endTime-startTime));
+        execTime = (endTime-startTime);
     }
 
     private void episode(char[][] world, Vector<Vector<State>> qt, State state, int depth, double gamma, double alpha){
@@ -80,18 +85,13 @@ public class Qlearning {
 
         //test and test and set the initial state
         while(state.lock.get() == true || !state.lock.compareAndSet(false, true)){
-            try {
-                Thread.sleep(20);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
         }
 
         int[] pos = state.getPosition();
         int x = pos[0];
         int y = pos[1];
         if(world[y][x] == 'x'){
-            System.out.println("hit an obstacle");
+            //System.out.println("hit an obstacle");
             return;
         }
         if(qt.elementAt(y).elementAt(x).getReward() > 99.999){
